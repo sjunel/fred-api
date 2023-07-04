@@ -1,0 +1,13 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title FRED Data 
+  body 
+    #myplot 
+    script(type='module').
+      import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm";
+      const plot = Plot.lineY(mydata , {x: "date", y: "value"}).plot({y: {grid: true}});
+      const div = document.querySelector("#myplot");
+      div.append(plot);
