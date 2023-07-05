@@ -20,11 +20,26 @@ app.get('/', (req: Request, res: Response): void => {
 
 app.get('/data', async (req: Request, res: Response): Promise<void> => {
   try {
-    const series = await fred.series.getObservationsForSeries('SP500');
+    // TODO check error for static type checking with wrapper
+    // Argument of type 'ObservationInfo' is not assignable to parameter of type 'string'
+    // const series = await fred.series.getObservationsForSeries('SP500');
 
-    // TODO format pulled data
+    // temp workaround, directly pull data
+    const URL = `https://api.stlouisfed.org/fred/series/observations?series_id=SP500&api_key=${process.env.FRED_API_KEY}&file_type=json`;
+    const response = await fetch(URL);
+    const series = await response.json(); // resp body parsed as json, returns js obj
 
-    res.send(series.observations);
+    // TODO Add edge cases
+    let data = series.observations.map((obj: any) => {
+      const newObj: { date: Date, value: number } = {
+        date: new Date(obj.date), // if error, or...
+        value: parseInt(obj.value) // if returns undefined, null
+      };
+
+      return newObj;
+    });
+
+    res.send(data);
   } catch (err) {
     res.send(err);
   }
