@@ -27,13 +27,20 @@ app.get('/data', async (req: Request, res: Response): Promise<void> => {
     // temp workaround, directly pull data
     const URL = `https://api.stlouisfed.org/fred/series/observations?series_id=SP500&api_key=${process.env.FRED_API_KEY}&file_type=json`;
     const response = await fetch(URL);
-    const series = await response.json(); // resp body parsed as json, returns js obj
+    const series = await response.json(); // res body parsed as json, returns js obj
 
     // TODO Add edge cases
     let data = series.observations.map((obj: any) => {
+// date in valid YYYY-MM-DD str format, can convert to date obj, else remove
+// new Date constructor throws error
+
+// value is valid numeric string, can convert to number, else remove 
+// "." is invalid
+// Number constuctor throws error
+
       const newObj: { date: Date, value: number } = {
-        date: new Date(obj.date), // if error, or...
-        value: parseInt(obj.value) // if returns undefined, null
+        date: new Date(obj.date),
+        value: Number(obj.value) || 0
       };
 
       return newObj;
