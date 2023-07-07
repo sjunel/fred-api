@@ -21,32 +21,44 @@ app.get('/', (req: Request, res: Response): void => {
 app.get('/data', async (req: Request, res: Response): Promise<void> => {
   try {
     // TODO check error for static type checking with wrapper
-    // Argument of type 'ObservationInfo' is not assignable to parameter of type 'string'
     // const series = await fred.series.getObservationsForSeries('SP500');
 
     // temp workaround, directly pull data
     const URL = `https://api.stlouisfed.org/fred/series/observations?series_id=SP500&api_key=${process.env.FRED_API_KEY}&file_type=json`;
     const response = await fetch(URL);
-    const series = await response.json(); // res body parsed as json, returns js obj
+    const series = await response.json();
 
-    // TODO Add edge cases
-    let data = series.observations.map((obj: any) => {
-// date in valid YYYY-MM-DD str format, can convert to date obj, else remove
-// new Date constructor throws error
+    let data = series.observations.filter((obj: any) => {
+      function isValidDate(dateStr: string) {
+        const REGEX = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateStr.match(REGEX)) return false;  // Invalid YYYY-MM-DD str format
 
-// value is valid numeric string, can convert to number, else remove 
-// "." is invalid
-// Number constuctor throws error
+        let date = new Date(dateStr);
+        let dateNum = date.getTime();
+        if (!dateNum && dateNum !== 0) return false; // Invalid date, NaN value
 
+        return date.toISOString().slice(0, 10) === dateStr; // Valid day? e.g. not leap day
+      };
+
+      function isValidVal(valStr: string) {
+        const REGEX = /^\d*(\.\d{1,2})?$/;
+
+        return valStr.match(REGEX); // Valid str format?
+      };
+
+      return isValidDate(obj.date) && isValidVal(obj.value);
+    });
+
+    let formattedData = data.map((obj: any) => {
       const newObj: { date: Date, value: number } = {
         date: new Date(obj.date),
-        value: Number(obj.value) || 0
+        value: Number(obj.value)
       };
 
       return newObj;
     });
 
-    res.send(data);
+    res.send(formattedData);
   } catch (err) {
     res.send(err);
   }
